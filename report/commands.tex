@@ -1,0 +1,243 @@
+%Packages
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{mhchem}
+\usepackage{multicol}
+\usepackage{gensymb}
+\usepackage{chemfig}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{pgfplotstable}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{commath}
+\usepackage{centernot}
+\usepackage{clrscode3e}
+\usepackage{tikz-cd}
+\usepackage{enumitem}
+\usepackage{cryptocode}
+\usepackage{amssymb}
+\usepackage[shortlabels]{enumitem}
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
+\graphicspath{ {./images/} }
+%Custom Environments
+
+%A generic custom theorem header
+\newtheoremstyle{ntheoremstyle}% name of the style to be used
+{}% measure of space to leave above the theorem. E.g.: 3pt
+{}% measure of space to leave below the theorem. E.g.: 3pt
+{\it}% name of font to use in the body of the theorem
+{}% measure of space to indent
+{\bfseries}% name of head font
+{}% punctuation between head and body
+{ }% space after theorem head; " " = normal interword space
+{\thmname{#3}.}
+\theoremstyle{ntheoremstyle}
+\newtheorem{ntheorem}{Theorem}[section]
+
+\newtheoremstyle{ndefinitionstyle}% name of the style to be used
+{}% measure of space to leave above the theorem. E.g.: 3pt
+{}% measure of space to leave below the theorem. E.g.: 3pt
+{}% name of font to use in the body of the theorem
+{}% measure of space to indent
+{\bfseries}% name of head font
+{}% punctuation between head and body
+{ }% space after theorem head; " " = normal interword space
+{\thmname{#3}.}
+\theoremstyle{ndefinitionstyle}
+\newtheorem{ndefinition}{Theorem}[section]
+
+\newtheoremstyle{nproofstyle}% name of the style to be used
+{}% measure of space to leave above the theorem. E.g.: 3pt
+{}% measure of space to leave below the theorem. E.g.: 3pt
+{}% name of font to use in the body of the theorem
+{}% measure of space to indent
+{\bfseries}% name of head font
+{}% punctuation between head and body
+{ }% space after theorem head; " " = normal interword space
+{\thmname{#3}.}
+\theoremstyle{nproofstyle}
+\newtheorem{nproof}{Proof}[section]
+%Custom Commands
+\newcommand{\ringmod}[1]{$\mathbb{Z}$/#1$\mathbb{Z}$}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\Eu}{\mathbb{E}}
+\newcommand{\PGL}{\text{PGL}}
+\newcommand{\GL}{\text{GL}}
+\newcommand{\Aut}{\text{Aut}}
+\newcommand{\Endo}{\text{End}}
+\newcommand{\E}[1]{\mathbb{E}\left[ #1 \right]}
+\newcommand{\Mod}[1]{\ (\mathrm{mod}\ #1)}
+\newcommand{\subproblem}[2]{\noindent \ \ \ \ \ \ \ \ \ \ (#1) \ \ #2 \newline\noindent}
+\newcommand{\Lim}{\lim\limits}
+\newcommand{\Int}{\displaystyle \int}
+\newcommand{\Equation}[2]{\begin{equation}
+    #2 \tag{#1} \label{eq: #1}
+\end{equation}}
+\newcommand{\trace}{\text{trace} \ }
+\newcommand{\Var}{\text{Var}}
+\newcommand{\Tor}{\text{Tor}}
+\newcommand{\cross}{\times}
+\newcommand{\vmat}[1]{\begin{vmatrix} #1 \end{vmatrix}}
+\newcommand{\bmat}[1]{\begin{bmatrix} #1 \end{bmatrix}}
+\newcommand{\pmat}[1]{\begin{pmatrix} #1 \end{pmatrix}}
+\newcommand{\eqq}{\stackrel{?}{=}}
+\newcommand{\p}[1]{\left( #1 \right)}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\babs{\bigg \lvert}{\bigg \rvert}
+\newcommand{\note}[1]{\begin{changemargin}{.5cm}{.5cm}\emph{\underline{Note}:} #1 \end{changemargin}}
+\def\changemargin#1#2{\list{}{\rightmargin#2\leftmargin#1}\item[]}
+\let\endchangemargin=\endlist 
+\newcommand{\xor}{\ \underline{\lor} \ }
+\newcommand{\suchthat}{\ \text{s.t.} \ }
+\newcommand{\spanof}{\text{span} \ }
+\newcommand{\code}[1]{\lstinline{#1}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\newcommand{\tr}{\text{tr} \ }
+\newcommand{\sign}{\text{sign}}
+\newcommand{\mc}[1]{\mathcal{#1}}
+%Crypto Stuff
+\newcommand{\sendright}[1]{\sendmessageright{top=\text{#1}}}
+\newcommand{\sendleft}[1]{\sendmessageleft{top=\text{#1}}}
+
+%Chem Stuff
+\newcommand{\aq}{_{(aq)}}
+
+\newcommand{\rarrow}{$\to$ }
+\newcommand{\imp}{$\implies$}
+%Physics
+\newcommand{\ihat}{\hat{i}}
+\newcommand{\jhat}{\hat{j}}
+\newcommand{\khat}{\hat{k}}
+\newcommand{\avg}{\text{avg}}
+\usepackage{mathtools}
+\DeclarePairedDelimiter\bra{\langle}{\rvert}
+\DeclarePairedDelimiter\bk{\langle}{\rangle}
+\DeclarePairedDelimiter\ket{\lvert}{\rangle}
+\DeclarePairedDelimiterX\braket[2]{\langle}{\rangle}{#1 \delimsize\vert #2}
+%Units
+\newcommand{\m}{\text{m}}
+\newcommand{\nm}{\text{nm}}
+\newcommand{\s}{\text{s}}
+\newcommand{\kg}{\text{kg}}
+\newcommand{\ft}{\text{ft}}
+\newcommand{\g}{\text{g}}
+\newcommand{\J}{\text{J}}
+\newcommand{\mol}{\text{mol}}
+\newcommand{\dC}{\degree \text{C}}
+\newcommand{\dK}{\degree \text{K}}
+\newcommand{\Ne}{\text{N}}
+\newcommand{\net}{\text{net}}
+\newcommand{\ang}{\mbox{\normalfont\AA}}
+\newcommand{\atm}{\text{atm}}
+\newcommand{\Co}{\text{C}}
+\newcommand{\A}{\text{A}}
+\newcommand{\V}{\text{V}}
+\newcommand{\K}{\text{K}}
+\newcommand{\q}[1]{\textbf{#1}}
+\newcommand{\rank}{\text{rank}}
+\newcommand{\ran}{\text{Ran}}
+\newcommand{\detailtexcount}[1]{%
+  \immediate\write18{texcount -merge -sum -incbib -dir #1.tex > #1.wcdetail }%
+  \verbatiminput{#1.wcdetail}%
+}
+\newcommand{\Res}{\text{Res}}
+\newcommand{\Gal}{\text{Gal}}
+\newcommand{\tensor}{\otimes}
+\newcommand{\im}{\text{Im} \ }
+\newcommand{\sinc}{\text{sinc} \ }
+\newcommand{\inner}[2]{\langle #1, #2 \rangle}
+
+\newcommand{\from}{\leftarrow}
+
+\usetikzlibrary{arrows}
+
+\newcommand{\quickwordcount}[1]{%
+  \immediate\write18{texcount -1 -sum=1,0,0,0,0,0,0. -merge #1.tex > #1-words.sum }%
+  \input{#1-words.sum}%
+}
+
+\newcommand{\quickcharcount}[1]{%
+  \immediate\write18{texcount -1 -sum -merge -char #1.tex > #1-chars.sum }%
+  \input{#1-chars.sum}%
+}
+
+\newcommand{\bibent}{\noindent \hangindent 40pt}
+\newenvironment{workscited}{\newpage \begin{center} Works Cited \end{center}}{\newpage }
+
+%New colors defined below
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+%Code listing style named "mystyle"
+\lstdefinestyle{mystyle}{
+  backgroundcolor=\color{backcolour},   commentstyle=\color{codegreen},
+  keywordstyle=\color{magenta},
+  numberstyle=\tiny\color{codegray},
+  stringstyle=\color{codepurple},
+  basicstyle=\ttfamily\footnotesize,
+  breakatwhitespace=false,         
+  breaklines=true,                 
+  captionpos=b,                    
+  keepspaces=true,                 
+  numbers=left,                    
+  numbersep=2pt,                  
+  showspaces=false,                
+  showstringspaces=false,
+  showtabs=false,                  
+  tabsize=2
+}
+%"mystyle" code listing set
+\lstset{style=mystyle}
+
+\newcommand{\lstnextline}[1]{\lstdefinestyle{mystyle#1}{
+  backgroundcolor=\color{backcolour},   commentstyle=\color{codegreen},
+  keywordstyle=\color{magenta},
+  numberstyle=\tiny\color{codegray},
+  stringstyle=\color{codepurple},
+  basicstyle=\ttfamily\footnotesize,
+  breakatwhitespace=false,         
+  breaklines=true,                 
+  captionpos=b,                    
+  keepspaces=true,                 
+  numbers=left,                    
+  numbersep=5pt,                  
+  showspaces=false,                
+  showstringspaces=false,
+  showtabs=false,                  
+  tabsize=2,
+  firstnumber=#1
+}
+%"mystyle" code listing set
+\lstset{style=mystyle#1}}
+
+\usepackage{calligra}
+
+\DeclareMathAlphabet{\mathcalligra}{T1}{calligra}{m}{n}
+\DeclareFontShape{T1}{calligra}{m}{n}{<->s*[2.2]callig15}{}
+\newcommand{\gr}{\mathcalligra{r}\,}
+\newcommand{\bgr}{\pmb{\mathcalligra{r}}\,}
+
+\setlength\parindent{0pt}
