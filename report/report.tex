@@ -11,19 +11,121 @@
 
 \input{commands}
 
+\newcommand{\Enc}{\text{Enc}}
+\newcommand{\Dec}{\text{Dec}}
+\newcommand{\innerprod}[1]{\langle #1 \rangle}
+
 \begin{document}
-
-
-
-\begin{abstract}
-    GTest! Hi! Test!
-\end{abstract}
 
 \section{Introduction}
 
+Homomorphic encryption is an important cryptographic primitive that is necessary to support modern cryptographic protocols, such as anonymous voting. Some constructions of such a scheme are complicated and unintuitive. However, recent constructions relying on the Learning With Errors (LWE) problem and utilizing lattice structures provide concise and palatable examples.
+
+This report will discuss the background and context for such a scheme, and walk through a sample implementation in Python.
+
+\subsection{Notation}
+
+Let $\mc{K_S}, \mc{K_P}, \mc{M}, \mc{C}$ represent the secret key space, public key space, message space, and ciphertext spaces of an encryption scheme, respectively.
+
+We will refer to a \textit{lattice} $L_{n,q}$ to be the set of $n$-dimensional vectors whose (integral) elements are in $\Z_q$ (sometimes written $\Z_q^n$).
+
+The inner product of two vectors $\vec{a}, \vec{b}$ is written $\innerprod{\vec{a}, \vec{b}}$, corresponding to:\footnote{I will be sticking to 0-indexed notation for this report, so that it matches more closely with the code.}
+
+\begin{equation}
+    \innerprod{\vec{a}, \vec{b}} = \sum_{i = 0}^{n - 1} a_i b_i
+\end{equation}
+
+Where each vector is of size $n$.
+
+When describing encryption schemes, they will each contain an encryption scheme $\Enc$ which takes as parameters a public key $k_p$ and a message $m$, and decryption scheme $\Dec$ which takes as parameters a secret key $k_s$ and a ciphertext $c$. An example illustrating the correctness of such a scheme would be:
+
+\begin{equation}
+    \Dec(k_s, \Enc(k_p, m)) = m
+\end{equation}
+
+\section{Homomorphic Encryption}
+
+When we say that an encryption scheme is \textit{homomorphic}, what we really mean is that we are able to perform some binary operation $S_C: (C,C) \to C$ on encrypted ciphertexts that corresponds to some operation $S_M: (M, M) \to M$ on the original messages.
+
+An intuitive example could be a scheme where adding two ciphertexts $c_1 + c_2$ results in a ciphertext that is a valid encryption of the \textit{sum} of the original messages $m_1,m_2$, such that only the sum $m_1 + m_2$ is revealed when the quantity $c_1 + c_2$ is decrypted. Importantly, this cannot reveal \textit{anything about the original ciphertexts themselves} (other than what is discernable from the operation itself).
+
+A more precise description of a homomorphic encryption scheme is as follows:
+
+\begin{ndefinition}[Definition (Homomorphic Encryption)]
+    An encryption scheme $E = (\Enc_E, \Dec_E)$ consisting of encryption and decryption functions is \textit{homomorphic} for an operator $S = (S_M, S_C)$ if for any two messages $m_1, m_2 \in \mc{M}$, public key $k_p \in \mc{K_P}$, and secret key $k_s \in \mc{K_S}$, the following is satisfied:
+
+    \begin{equation}
+        \Dec_E\p{k_s, S_C(\Enc_E(k_p, m_1), \Enc_E(k_p, m_2))} = S_M(m_1, m_2)
+    \end{equation}
+\end{ndefinition}
+
+An important note is that the operations $S_C$ and $S_M$ are not necessarily (and are generally not) the same. For instance, it is possible that $S_C(c_1, c_2) = c_1 \cdot c_2$ (multiplying the ciphertexts) whereas the effect on the messages is addition: $S_M(m_1, m_2) = m_1 + m_2$ (adding the underlying messages). In other schemes, including the LWE scheme that we will discuss later, these functions get more complicated.
+
+This definition is somewhat specific to work with the system we will discuss later, as certain homomorphic schemes can require additional parameters to be passed to the homomorphic operation $S_C$, such as the public key of the scheme.
+
+A more ideal version of this ciphertext malleability is to allow for computation of arbitrary functions (circuits) on any number of ciphertexts. This is generally referred to as \textit{fully homomorphic encryption (FHE)} (CITATION). This seems like an incredibly difficult (or even impossible) task at first, but the following theorem helps us achieve this:
+
+% TODO: Theorem about what operations are required for FHE 
+
+% TODO: Also give a proof of intuition for why its true, informally
+
+We will see that the scheme we focus on later in this report is in fact a FHE scheme, but with some limitations that we will also investigate.
+
+\subsection{Example: Diffie-Hellman}
+
+One illustrative example of homomorphic encryption is actually the Diffie-Hellman encryption scheme. If there are two encrypted messages $c_1 = (g^{r_1}, h^{r_1} m_1)$, and $c_2 = (g^{r_2}, h^{r_2} m_2)$, then we see that we get:
+
+\begin{align}
+    S_C(c_1, c_2) & = c_1 \cdot c_2                                          \\
+                  & = (g^{r_1} \cdot g^{r_2}, h^{r_1} m_1 \cdot h^{r_2} m_2) \\
+                  & = (g^{r_1 + r_2}, h^{r_1 + r_2} m_1 \cdot m_2)
+\end{align}
+
+Note that we're basically just doing pointwise multiplication within the tuple ciphertext. Importantly, since $r_1, r_2$ are randomly chosen from $\Z_q$, the quantity $r_1 + r_2$ is also completely random. This means that this is the same as an encryption of the quantity $m_1 \cdot m_2$, the product of the original messages.
+
+Unfortunately, this example does not suffice for \textit{fully} homomorphic encryption, because it only supports a single operation on the message space (multiplication), so we cannot use this for arbitrary computation.
+
+\subsection{Applications of Homomorphic Encryption}
+
+In practice, homomorphic encryption is an incredibly versatile tool, which has a variety of use cases:
+
+\begin{enumerate}
+    \item \textbf{Anonymous Voting}: Say some government or organization wanted to tally votes for an election
+    \item \textbf{Healthcare Statistics}:
+\end{enumerate}
+
 \section{Learning With Errors (LWE)}
 
-\section{}
+Learning with Errors generally refers to a cryptographic \textit{assumption} about a problem that is difficult to compute in a lattice $L_{q, n}$. That problem can be described as follows:
+
+\begin{ndefinition}[Definition (Learning with Errors - Decisional)]
+    Let $\mc{\chi}$ be a probability distribution. Consider the following distributions:
+
+    \begin{enumerate}
+        \item $\mc{R}$: Generate a random vector $\vec{a} \from L_{q,n}$, and a random element $b \from \Z_q$. Then, return the tuple $(\vec{a},b)$.
+        \item $\mc{L}_{\vec{s}}$: Let $s$ be a parameter of the distribution, where $\vec{s}$ is a random vector sampled from $L_{q,n}$ (this is the secret key of the distribution).
+
+        Samples are generated as follows: select $\vec{a} \from L_{q,n}$ randomly, and then set $b = \innerprod{\vec{a}, \vec{s}} + e$, where $e$ is sampled randomly from $\chi$. Then, the tuple $(\vec{a}, b)$ is returned. 
+    \end{enumerate}
+
+    The (decisional) LWE problem is the following: Given $m$ samples from either $\mc{R}$ or $\mc{L}_s$ (all samples from the same distribution), the problem is to guess which distribution the samples come from.
+
+    The LWE \textit{assumption} is that the LWE problem is computationally infeasibly (outside of the quantum setting). That is, no polynomial time algorithm can differentiate from samples coming from the completely random distribution $\mc{R}$ and samples coming from the secret vector generated distribution $\mc{L}_{\vec{s}}$.
+\end{ndefinition}
+
+Note that clearly, the LWE assumption does \textit{not} hold for all choices of $\chi$. For instance, if $\chi = 0$ (returns 0 with probability 1), then there is no longer any randomness associated associated with $b$, and so an adversary can distinguish the distributions in this case.
+
+Note that there is a similar version of this problem for \textit{search}:
+
+\begin{ndefinition}[Definition (Learning with Errors - Search)]
+    
+\end{ndefinition}
+
+\section{Homomorphic Encryption from LWE}
+
+\section{Implementation}
+
+\section{Conclusion}
 
 
 \end{document}

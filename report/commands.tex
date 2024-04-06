@@ -19,18 +19,17 @@
 \usepackage{caption}
 \usepackage{commath}
 \usepackage{centernot}
-\usepackage{clrscode3e}
 \usepackage{tikz-cd}
 \usepackage{enumitem}
 \usepackage{cryptocode}
 \usepackage{amssymb}
 \usepackage[shortlabels]{enumitem}
 \hypersetup{
-    colorlinks,
-    citecolor=black,
-    filecolor=black,
-    linkcolor=black,
-    urlcolor=black
+  colorlinks,
+  citecolor=black,
+  filecolor=black,
+  linkcolor=black,
+  urlcolor=black
 }
 \graphicspath{ {./images/} }
 %Custom Environments
@@ -91,7 +90,7 @@
 \newcommand{\Int}{\displaystyle \int}
 \newcommand{\Equation}[2]{\begin{equation}
     #2 \tag{#1} \label{eq: #1}
-\end{equation}}
+  \end{equation}}
 \newcommand{\trace}{\text{trace} \ }
 \newcommand{\Var}{\text{Var}}
 \newcommand{\Tor}{\text{Tor}}
@@ -106,7 +105,7 @@
 \DeclarePairedDelimiter\babs{\bigg \lvert}{\bigg \rvert}
 \newcommand{\note}[1]{\begin{changemargin}{.5cm}{.5cm}\emph{\underline{Note}:} #1 \end{changemargin}}
 \def\changemargin#1#2{\list{}{\rightmargin#2\leftmargin#1}\item[]}
-\let\endchangemargin=\endlist 
+\let\endchangemargin=\endlist
 \newcommand{\xor}{\ \underline{\lor} \ }
 \newcommand{\suchthat}{\ \text{s.t.} \ }
 \newcommand{\spanof}{\text{span} \ }
@@ -198,40 +197,40 @@
   numberstyle=\tiny\color{codegray},
   stringstyle=\color{codepurple},
   basicstyle=\ttfamily\footnotesize,
-  breakatwhitespace=false,         
-  breaklines=true,                 
-  captionpos=b,                    
-  keepspaces=true,                 
-  numbers=left,                    
-  numbersep=2pt,                  
-  showspaces=false,                
+  breakatwhitespace=false,
+  breaklines=true,
+  captionpos=b,
+  keepspaces=true,
+  numbers=left,
+  numbersep=2pt,
+  showspaces=false,
   showstringspaces=false,
-  showtabs=false,                  
+  showtabs=false,
   tabsize=2
 }
 %"mystyle" code listing set
 \lstset{style=mystyle}
 
 \newcommand{\lstnextline}[1]{\lstdefinestyle{mystyle#1}{
-  backgroundcolor=\color{backcolour},   commentstyle=\color{codegreen},
-  keywordstyle=\color{magenta},
-  numberstyle=\tiny\color{codegray},
-  stringstyle=\color{codepurple},
-  basicstyle=\ttfamily\footnotesize,
-  breakatwhitespace=false,         
-  breaklines=true,                 
-  captionpos=b,                    
-  keepspaces=true,                 
-  numbers=left,                    
-  numbersep=5pt,                  
-  showspaces=false,                
-  showstringspaces=false,
-  showtabs=false,                  
-  tabsize=2,
-  firstnumber=#1
-}
-%"mystyle" code listing set
-\lstset{style=mystyle#1}}
+    backgroundcolor=\color{backcolour},   commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    firstnumber=#1
+  }
+  %"mystyle" code listing set
+  \lstset{style=mystyle#1}}
 
 \usepackage{calligra}
 
