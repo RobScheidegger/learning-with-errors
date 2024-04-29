@@ -1,13 +1,16 @@
 \documentclass{theme}
 
 
-\misc{Homomorphic Encryption through Learning With Errors (LWE)}
+\misc{Homomorphic Encryption via Ring Learning With Errors (RLWE)}
 \due{May 12th, 2024}
 
 \usepackage[outputdir=../../]{minted}
 
 \course{MATH 1580 - Spring 2024}{Cryptography}{Professor Vogt}
 
+% Add bibliography
+\usepackage[backend=biber]{biblatex}
+\addbibresource{references.bib}
 
 \input{commands}
 
@@ -26,22 +29,6 @@ This report will discuss the background and context for such a scheme, and walk 
 \subsection{Notation}
 
 Let $\mc{K_S}, \mc{K_P}, \mc{M}, \mc{C}$ represent the secret key space, public key space, message space, and ciphertext spaces of an encryption scheme, respectively.
-
-We will refer to a \textit{lattice} $L_{n,q}$ to be the set of $n$-dimensional vectors whose (integral) elements are in $\Z_q$ (sometimes written $\Z_q^n$).
-
-The inner product of two vectors $\vec{a}, \vec{b}$ is written $\innerprod{\vec{a}, \vec{b}}$, corresponding to:\footnote{I will be sticking to 0-indexed notation for this report, so that it matches more closely with the code.}
-
-\begin{equation}
-    \innerprod{\vec{a}, \vec{b}} = \sum_{i = 0}^{n - 1} a_i b_i
-\end{equation}
-
-Where each vector is of size $n$.
-
-When describing encryption schemes, they will each contain an encryption scheme $\Enc$ which takes as parameters a public key $k_p$ and a message $m$, and decryption scheme $\Dec$ which takes as parameters a secret key $k_s$ and a ciphertext $c$. An example illustrating the correctness of such a scheme would be:
-
-\begin{equation}
-    \Dec(k_s, \Enc(k_p, m)) = m
-\end{equation}
 
 \section{Homomorphic Encryption}
 
@@ -63,13 +50,9 @@ An important note is that the operations $S_C$ and $S_M$ are not necessarily (an
 
 This definition is somewhat specific to work with the system we will discuss later, as certain homomorphic schemes can require additional parameters to be passed to the homomorphic operation $S_C$, such as the public key of the scheme.
 
-A more ideal version of this ciphertext malleability is to allow for computation of arbitrary functions (circuits) on any number of ciphertexts. This is generally referred to as \textit{fully homomorphic encryption (FHE)} (CITATION). This seems like an incredibly difficult (or even impossible) task at first, but the following theorem helps us achieve this:
+A more ideal version of this ciphertext malleability is to allow for computation of arbitrary functions (circuits) on any number of ciphertexts. This is generally referred to as \textit{fully homomorphic encryption (FHE)} (CITATION). This is because so long as we can multiply and add ciphertexts, we can compute any arithmetic function (by approximating it with a circuit of addition and multiplication operations). Note that we get
 
-% TODO: Theorem about what operations are required for FHE 
-
-% TODO: Also give a proof of intuition for why its true, informally
-
-We will see that the scheme we focus on later in this report is in fact a FHE scheme, but with some limitations that we will also investigate.
+The variant that we will discuss later is a \textit{somewhat homomorphic encryption (SHE)} scheme, which allows for a fixed number of operations to be computed on a given ciphertext. These schemes are less expressive than FHE schemes, but are much easier to implement.
 
 \subsection{Example: Diffie-Hellman}
 
@@ -94,38 +77,22 @@ In practice, homomorphic encryption is an incredibly versatile tool, which has a
     \item \textbf{Healthcare Statistics}:
 \end{enumerate}
 
-\section{Learning With Errors (LWE)}
+\section{Ring Learning With Errors (RLWE)}
 
-Learning with Errors generally refers to a cryptographic \textit{assumption} about a problem that is difficult to compute in a lattice $L_{q, n}$. That problem can be described as follows:
+The Ring Learning With Errors (RLWE) problem is a variant of the Learning With Errors (LWE) problem that is used to construct homomorphic encryption schemes. The constructs required for these schemes are generally a security parameter $n$ (which vaguely describes the hardness of the protocol, such that breaking the protocol is can only be achieved with $2^n$ operations), a modulus $q$ (which is the modulus of the ring that we are working in).
 
-\begin{ndefinition}[Definition (Learning with Errors - Decisional)]
-    Let $\mc{\chi}$ be a probability distribution. Consider the following distributions:
+For this scheme, we will rely on the rings of the form $R_q = \Z_q[x]/(x^m + 1)$, which represent polynomials with integer coefficients modulo $q$ (aka the coefficients lie in $\Z_q$) modulo the polynomial $x^m + 1$ (roughly meaning that they have degree less than $m$). Although rings are outside the exact scope of this class (as well as the notion of modulo by ideals), these are details not directly relevant to the construction of the encryption scheme.
 
-    \begin{enumerate}
-        \item $\mc{R}$: Generate a random vector $\vec{a} \from L_{q,n}$, and a random element $b \from \Z_q$. Then, return the tuple $(\vec{a},b)$.
-        \item $\mc{L}_{\vec{s}}$: Let $s$ be a parameter of the distribution, where $\vec{s}$ is a random vector sampled from $L_{q,n}$ (this is the secret key of the distribution).
+We also require a noise distribution $\chi$ which produces random element $e \in \R_q$ that is \textit{small}, in the sense that has high probability of being less than some bound $B$, which we will discuss later.
 
-        Samples are generated as follows: select $\vec{a} \from L_{q,n}$ randomly, and then set $b = \innerprod{\vec{a}, \vec{s}} + e$, where $e$ is sampled randomly from $\chi$. Then, the tuple $(\vec{a}, b)$ is returned. 
-    \end{enumerate}
-
-    The (decisional) LWE problem is the following: Given $m$ samples from either $\mc{R}$ or $\mc{L}_s$ (all samples from the same distribution), the problem is to guess which distribution the samples come from.
-
-    The LWE \textit{assumption} is that the LWE problem is computationally infeasibly (outside of the quantum setting). That is, no polynomial time algorithm can differentiate from samples coming from the completely random distribution $\mc{R}$ and samples coming from the secret vector generated distribution $\mc{L}_{\vec{s}}$.
-\end{ndefinition}
-
-Note that clearly, the LWE assumption does \textit{not} hold for all choices of $\chi$. For instance, if $\chi = 0$ (returns 0 with probability 1), then there is no longer any randomness associated associated with $b$, and so an adversary can distinguish the distributions in this case.
-
-Note that there is a similar version of this problem for \textit{search}:
-
-\begin{ndefinition}[Definition (Learning with Errors - Search)]
-    
-\end{ndefinition}
-
-\section{Homomorphic Encryption from LWE}
+The RLWE problem is then defined as follows :
 
 \section{Implementation}
 
 \section{Conclusion}
 
+% Add bibliography
+
+\printbibliography
 
 \end{document}

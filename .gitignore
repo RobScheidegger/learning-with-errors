@@ -164,3 +164,10 @@ cython_debug/
 *.out
 *.fdb_latexmk
 *.gz
+
+report/*
+!report/report.tex
+!report/report.pdf
+!report/references.bib
+!report/cs.cls
+!report/commands.tex
