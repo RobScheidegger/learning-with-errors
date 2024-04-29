@@ -95,12 +95,6 @@ def make_ring(n: int, m: int) -> Type:
             self.c = [c % self.n for c in c_new]
             
             assert len(self.c) == self.m
-                
-        def sample(self):
-            """
-            Samples a polynomial from R_n.
-            """
-            return R([random.randint(0, self.n) for _ in range(self.m)])
         
         def negate(self):
             """
@@ -114,7 +108,7 @@ def make_ring(n: int, m: int) -> Type:
             """
             return R([(a * b) % self.n for b in self.c])
         
-        def make_gaussian_error(sigma: float) -> ErrorFunction:
+        def make_gaussian_error(sigma: float):
             """
             Generates a sample from the Gaussian error distribution that is gaussian in each polynomial coordinate of R_Q.
             """
@@ -129,26 +123,26 @@ def make_ring(n: int, m: int) -> Type:
                 for j, b in enumerate(other.c):
                     new_c[i + j] += a * b
             return R(new_c)
+        
+        def __eq__(self, other):
+            return self.c == other.c
+        
+        def __repr__(self):
+            return f"R({self.c})"
 
     return R
 
-        
-        
-    
-    def __add__(self, other: R) -> R:
-        return R([(a + b) % self.n for a, b in zip(self.v, other.v)], self.n, self.m)
+def sample_gaussian_error(sigma: float, n: int, m: int) -> list[int]:
+    """
+    Generates a sample from the Gaussian error distribution that is gaussian in each polynomial coordinate of R_Q.
+    """
+    return [abs(int(random.gauss(0, sigma))) % n for _ in range(m)]
 
-R_Q = list[int]
-R_T = list[int]
-
-ErrorFunction = Callable[[], R_Q]
-
-
-
-
-BFVPlaintext = R_T
-BFVCiphertext = Tuple[R_Q, R_Q]
-
+def sample_from_ring(R, n, m) -> list[int]:
+    """
+    Generates a random sample from the ring R.
+    """
+    return R([random.randint(0, n - 1) for _ in range(m)])
 
 
 class BFV:
@@ -165,12 +159,15 @@ class BFV:
         self.R_Q = make_ring(q, m)
         self.R_T = make_ring(t, m)
         
-        self.chi = R_Q.make_gaussian_error(sigma)
+        self.chi = lambda: self.R_Q(sample_gaussian_error(sigma, q, m))
+        # self.chi = lambda: self.R_Q([0] * m)
         
     def generate_keypair(self) -> Tuple[SecretKey, PublicKey]:
         s = self.chi()
-        a = R_Q.sample()
+        a = self.chi()# sample_from_ring(self.R_T, self.q, self.m)
+        
         e = self.chi()
+        print(a, s, e)
         pk = ((a * s + e).negate(), a)
         sk = s
         return (sk, pk)
@@ -183,7 +180,7 @@ class BFV:
         u = self.chi()
         e_1 = self.chi()
         e_2 = self.chi()
-        m_in_q = R_Q(m.c)
+        m_in_q = self.R_Q(m.c)
         c1 = pk0 * u + e_1 + m_in_q.scalar_multiply(self.delta)
         c2 = pk1 * u + e_2
         
@@ -193,12 +190,21 @@ class BFV:
         """
         Decrypts a message.
         """
-        pass
+        s = k_s
+        c_0, c_1 = c
+        d = c_0 + c_1 * s
+        
+        coefficients = d.c
+        print(coefficients)
+        reduced_coefficients = [round((c * self.t) / self.q) % self.t for c in coefficients]
+        
+        return self.R_T(reduced_coefficients)
     
     def add(self, c_1: Ciphertext, c_2: Ciphertext) -> Ciphertext:
         """
         Adds two ciphertexts.
         """
+        
         pass
     
     def multiply(self, c_1: Ciphertext, c_2: Ciphertext) -> Ciphertext:
