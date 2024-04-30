@@ -37,3 +37,28 @@ def test_medium_bfv():
     m = bfv.R_T([1, 2, 3, 4, 5, 6])
     c = bfv.encrypt(pk, m)
     assert bfv.decrypt(sk, c) == m
+    
+    # Test homomorphic addition
+    m2 = bfv.R_T([6, 5, 4, 3, 2, 1])
+    c2 = bfv.encrypt(pk, m2)
+    c3 = bfv.add(c, c2)
+    assert bfv.decrypt(sk, c3) == bfv.R_T([7, 7, 7, 7, 7, 7])
+    
+def test_random_addition():
+    Q = 10**10
+    T = 10**5
+    M = 100
+    bfv = BFV(100.0, Q, M, T)
+    
+    sk, pk = bfv.generate_keypair()
+    
+    for _ in range(10):
+        m = bfv.R_T([random.randint(0, T - 1) for _ in range(M)])
+        c = bfv.encrypt(pk, m)
+        assert bfv.decrypt(sk, c) == m
+        
+        m2 = bfv.R_T([random.randint(0, T - 1) for _ in range(M)])
+        c2 = bfv.encrypt(pk, m2)
+        c3 = bfv.add(c, c2)
+        assert bfv.decrypt(sk, c3) == (m + m2)
+    

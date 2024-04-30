@@ -1,4 +1,5 @@
 import random
+import argparse
 
 from abc import ABC, abstractmethod
 from typing import TypeVar, Tuple, Type, Callable
@@ -69,7 +70,7 @@ def make_ring(n: int, m: int) -> Type:
             """
             Coefficients are given in low-to-high order in terms of polynomial degree (i.e. [a_0, a_1, ..., a_{m-1}])
             """
-            self.c = coefficients
+            self.c = [(c + n) % n for c in coefficients]
             self.n = n
             self.m = m
             self.reduce_modulo()
@@ -115,9 +116,11 @@ def make_ring(n: int, m: int) -> Type:
             return lambda: R([int(random.gauss(0, sigma)) % n for _ in range(m)])
         
         def __add__(self, other):
+            assert self.n == other.n
             return R([(a + b) % self.n for a, b in zip(self.c, other.c)])
         
         def __mul__(self, other):
+            assert self.n == other.n
             new_c = [0] * (2 * self.m - 1)
             for i, a in enumerate(self.c):
                 for j, b in enumerate(other.c):
@@ -128,7 +131,7 @@ def make_ring(n: int, m: int) -> Type:
             return self.c == other.c
         
         def __repr__(self):
-            return f"R({self.c})"
+            return f"R_{self.n}({self.c})"
 
     return R
 
@@ -155,29 +158,32 @@ class BFV:
         self.q = q
         self.m = m
         self.t = t
+        self.p = q ** 8 + 2
         
         self.R_Q = make_ring(q, m)
         self.R_T = make_ring(t, m)
+        self.R_PQ = make_ring(self.p * self.q, m)
         
-        self.chi = lambda: self.R_Q(sample_gaussian_error(sigma, q, m))
-        # self.chi = lambda: self.R_Q([0] * m)
+        # self.chi = lambda: self.R_Q(sample_gaussian_error(sigma, q, m))
+        self.chi = lambda: self.R_Q([0] * m)
         
     def generate_keypair(self) -> Tuple[SecretKey, PublicKey]:
-        s = self.chi()
-        a = self.chi()# sample_from_ring(self.R_T, self.q, self.m)
-        
+        s = sample_from_ring(self.R_Q, self.q, self.m)
+        a = sample_from_ring(self.R_Q, self.q, self.m)
         e = self.chi()
-        print(a, s, e)
+        
         pk = ((a * s + e).negate(), a)
         sk = s
+        
         return (sk, pk)
+
     
     def encrypt(self, k_p: PublicKey, m: Message) -> Ciphertext:
         """
         Encrypts a message.
         """
         pk0, pk1 = k_p
-        u = self.chi()
+        u = sample_from_ring(self.R_Q, self.q, self.m)
         e_1 = self.chi()
         e_2 = self.chi()
         m_in_q = self.R_Q(m.c)
@@ -185,7 +191,7 @@ class BFV:
         c2 = pk1 * u + e_2
         
         return (c1, c2)
-    
+
     def decrypt(self, k_s: SecretKey, c: Ciphertext) -> Message:
         """
         Decrypts a message.
@@ -195,8 +201,7 @@ class BFV:
         d = c_0 + c_1 * s
         
         coefficients = d.c
-        print(coefficients)
-        reduced_coefficients = [round((c * self.t) / self.q) % self.t for c in coefficients]
+        reduced_coefficients = [round((c * self.t) / self.q) for c in coefficients]
         
         return self.R_T(reduced_coefficients)
     
@@ -204,18 +209,6 @@ class BFV:
         """
         Adds two ciphertexts.
         """
-        
-        pass
-    
-    def multiply(self, c_1: Ciphertext, c_2: Ciphertext) -> Ciphertext:
-        """
-        Multiplies two ciphertexts.
-        """
-        raise NotImplementedError("multiply")
-    
-    def relinearize(self, c: Ciphertext) -> Ciphertext:
-        """
-        Relinearizes a ciphertext.
-        """
-        raise NotImplementedError("relinearize")
+        return (c_1[0] + c_2[0], c_1[1] + c_2[1])
+
     
