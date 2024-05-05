@@ -4,6 +4,11 @@
 \misc{Homomorphic Encryption via Ring Learning With Errors (RLWE)}
 \due{May 12th, 2024}
 
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{0.2\baselineskip}{0.2\baselineskip}
+\titlespacing*{\subsection}{0pt}{0.15\baselineskip}{0.15\baselineskip}
+\titlespacing*{\subsubsection}{0pt}{0.1\baselineskip}{0.1\baselineskip}
+
 \usepackage[outputdir=../../]{minted}
 
 \course{MATH 1580 - Spring 2024}{Cryptography}{Professor Vogt}
@@ -23,23 +28,25 @@
 \section{Introduction}
 
 Homomorphic encryption is an important cryptographic primitive that is necessary to support modern cryptographic protocols, such as anonymous voting. Some constructions of such a scheme are complicated and unintuitive. However, recent constructions relying on the Ring Learning With Errors (RLWE) problem provide reasonably concise and palatable constructions by relying on algebraic ring structures and computation therein.
-
-This report will discuss the background and context for such a scheme (called BFV), and walk through a sample implementation in Python.
-\footnote{Disclaimer: I was first exposed to this scheme and the RLWE problem in CSCI1515 (Applied Cryptography). However, the presentation was incredibly brief and didn't give any mathematical background on the construction, and we later used a library implementation as a black-box to construct other protocols. The content in the project is completely disjoint from that exposure, including both the mathematical background and the custom implementation.}
+\footnote{Disclaimer: I was first exposed to this scheme and the RLWE problem in CSCI1515 (Applied Cryptography). However, the presentation was incredibly brief and didn't give any mathematical background on the construction, and we later used a library implementation as a black-box to construct other protocols. The content in the project is completely disjoint from that exposure, including both the mathematical background and the custom implementation. \cite{csci1515}}
 
 \section{Background}
 
 Let $\mc{K_S}, \mc{K_P}, \mc{M}, \mc{C}$ represent the secret key space, public key space, message space, and ciphertext spaces of an encryption scheme, respectively.
 
-We recall from class that a \textit{ring} is a mathematical structure
+We recall from class that a \textit{group} is a mathematical structure on a set $G$ that gives us closure, associativity, identity, and inverses for some operation $(\cdot): G \times G \to G$.
+
+A \textit{ring} is a group with an additional operation $+$ (addition) that gives us closure, associativity, identity, and inverses for the operation $+$, and also satisfies the distributive property with respect to the original operation $(\cdot)$ (multiplication).
+
+For this project, we will be concerned with rings of the form $R_n = \Z_n/(x^m + 1)$, which are rings of polynomials with coefficients in $\Z_n$ modulo some polynomial $x^m + 1$. The exact structure and meaning of ``modulo'' in the context of rings is outside the scope of the project, but you can think of this as a ring of polynomials where the coefficients are taken modulo $n$ and the polynomial is taken modulo $x^m + 1$.
+
+For instance, if we take two elements $a = 2x^2 + 3x + 1$ and $b = 4x^2 + 2x + 3$ in $R_5 = \Z_5/(x^3 + 1)$, then the sum of these elements is $a + b = 1x^2 + 0x + 4 = 4x^2 + 4$, and the product of these elements is $a \cdot b = 3x^4 + 4x^3 + 4x^2 + 2x + 2 = 3x^2 + 4x + 2$ (with a special modulo reduction operation that causes them to behave slightly differently than lattices and other structures). \footnote{Understanding this really does require additional background that I don't have time to discuss here. The important thing is that we can easily (and programatically) \textit{add} and \textit{multiply} elements in these rings.}
 
 \section{Homomorphic Encryption}
 
 When we say that an encryption scheme is \textit{homomorphic}, what we really mean is that we are able to perform some binary operation $S_C: (C,C) \to C$ on encrypted ciphertexts that corresponds to some operation $S_M: (M, M) \to M$ on the original messages \cite{fhe}.
 
 An intuitive example could be a scheme where adding two ciphertexts $c_1 + c_2$ results in a ciphertext that is a valid encryption of the \textit{sum} of the original messages $m_1,m_2$, such that only the sum $m_1 + m_2$ is revealed when the quantity $c_1 + c_2$ is decrypted. Importantly, this cannot reveal \textit{anything about the original ciphertexts themselves} (other than what is discernable from the operation itself).
-
-A more precise description of a homomorphic encryption scheme is as follows:
 
 \begin{ndefinition}[Definition (Homomorphic Encryption)]
     An encryption scheme $E = (\Enc_E, \Dec_E)$ consisting of encryption and decryption functions is \textit{homomorphic} for an operator $S = (S_M, S_C)$ if for any two messages $m_1, m_2 \in \mc{M}$, public key $k_p \in \mc{K_P}$, and secret key $k_s \in \mc{K_S}$, the following is satisfied:
@@ -49,18 +56,13 @@ A more precise description of a homomorphic encryption scheme is as follows:
     \end{equation}
 \end{ndefinition}
 
-An important note is that the operations $S_C$ and $S_M$ are not necessarily (and are generally not) the same. For instance, it is possible that $S_C(c_1, c_2) = c_1 \cdot c_2$ (multiplying the ciphertexts) whereas the effect on the messages is addition: $S_M(m_1, m_2) = m_1 + m_2$ (adding the underlying messages). In other schemes, including the LWE scheme that we will discuss later, these functions get more complicated.
+An important note is that the operations $S_C$ and $S_M$ are not necessarily (and are generally not) the same. For instance, it is possible that $S_C(c_1, c_2) = c_1 \cdot c_2$ (multiplying the ciphertexts) whereas the effect on the messages is addition: $S_M(m_1, m_2) = m_1 + m_2$ (adding the underlying messages).
 
-This definition is somewhat specific to work with the system we will discuss later, as certain homomorphic schemes can require additional parameters to be passed to the homomorphic operation $S_C$, such as the public key of the scheme.
-
-A more ideal version of this ciphertext malleability is to allow for computation of arbitrary functions (circuits) on any number of ciphertexts. This is generally referred to as \textit{fully homomorphic encryption (FHE)} (CITATION). This is because so long as we can multiply and add ciphertexts, we can compute any arithmetic function (by approximating it with a circuit of addition and multiplication operations). Note that we get
-
-The variant that we will discuss later is a \textit{somewhat homomorphic encryption (SHE)} scheme, which allows for a fixed number of operations to be computed on a given ciphertext. These schemes are less expressive than FHE schemes, but are much easier to implement.
+The variant that we will discuss later is a \textit{somewhat homomorphic encryption (SHE)} scheme, which allows for a fixed number of operations to be computed on a given ciphertext. These schemes are less expressive than FHE schemes, but are generally easier to implement, and many FHE schemes are actually built on top of SHE schemes by taking additional steps to ensure that the computation error never exceeds some critical value \cite{fhe}.
 
 \subsection{Example: Diffie-Hellman}
 
 One illustrative example of homomorphic encryption is actually the Diffie-Hellman encryption scheme. If there are two encrypted messages $c_1 = (g^{r_1}, h^{r_1} m_1)$, and $c_2 = (g^{r_2}, h^{r_2} m_2)$, then we see that we get:
-
 \begin{align}
     S_C(c_1, c_2) & = c_1 \cdot c_2                                          \\
                   & = (g^{r_1} \cdot g^{r_2}, h^{r_1} m_1 \cdot h^{r_2} m_2) \\
@@ -69,32 +71,125 @@ One illustrative example of homomorphic encryption is actually the Diffie-Hellma
 
 Note that we're basically just doing pointwise multiplication within the tuple ciphertext. Importantly, since $r_1, r_2$ are randomly chosen from $\Z_q$, the quantity $r_1 + r_2$ is also completely random. This means that this is the same as an encryption of the quantity $m_1 \cdot m_2$, the product of the original messages.
 
-Unfortunately, this example does not suffice for \textit{fully} homomorphic encryption, because it only supports a single operation on the message space (multiplication), so we cannot use this for arbitrary computation.
-
-\subsection{Applications of Homomorphic Encryption}
-
-In practice, homomorphic encryption is an incredibly versatile tool, which has a variety of use cases:
-
-\begin{enumerate}
-    \item \textbf{Anonymous Voting}: Say some government or organization wanted to tally votes for an election
-    \item \textbf{Healthcare Statistics}:
-\end{enumerate}
-
 \section{Ring Learning With Errors (RLWE)}
 
-The Ring Learning With Errors (RLWE) problem is a variant of the Learning With Errors (LWE) problem that is used to construct homomorphic encryption schemes. The constructs required for these schemes are generally a security parameter $n$ (which vaguely describes the hardness of the protocol, such that breaking the protocol is can only be achieved with $2^n$ operations), a modulus $q$ (which is the modulus of the ring that we are working in).
+The Ring Learning With Errors (RLWE) problem is a variant of the Learning With Errors (LWE) problem that is used to construct homomorphic encryption schemes over rings $R$ \cite{fhe}. This scheme (the BFV scheme in particular) requires the following parameters and structures \cite{fhe}:\footnote{Some of the structures have been simplified for this project for clarity and ease of implementation.}
 
-For this scheme, we will rely on the rings of the form $R_q = \Z_q[x]/(x^m + 1)$, which represent polynomials with integer coefficients modulo $q$ (aka the coefficients lie in $\Z_q$) modulo the polynomial $x^m + 1$ (roughly meaning that they have degree less than $m$). Although rings are outside the exact scope of this class (as well as the notion of modulo by ideals), these are details not directly relevant to the construction of the encryption scheme.
+\begin{enumerate}
+    \item Integers $t, q, m$ to define the rings $R_t = \Z_t/(x^m + 1)$ and $R_q = \Z_q/(x^m + 1)$. For this scheme, the message space is $\mc{M} = R_t$ and the ciphertext space is $\mc{C} = R_q \cross R_q$.
+    \item An error distribution (or function) $\chi$ generating elements $e \in R_q$ that are \textit{small} in some sense. This is used to mask the encrypted values and ensure that the original message can be retrieved with the secret key. This error leaves a lot of room for variability, but for the sake of this project we will assuming that it is a Gaussian distribution with $\mu = 0$ and some standard deviation $\sigma$.
+    \item A large ratio $\Delta = \floor{\frac{q}{t}}$, which requires that $q \gg t$. This is necessary to isolate the ``message'' part of the decrypted ciphertext from the ``error'' part in the presence of the secret key.
+\end{enumerate}
 
-We also require a noise distribution $\chi$ which produces random element $e \in \R_q$ that is \textit{small}, in the sense that has high probability of being less than some bound $B$, which we will discuss later.
+The RLWE assumption is then defined as follows (with the parameters above) \cite{fhe}:
 
-The RLWE problem is then defined as follows :
+\begin{ndefinition}[RWLE Assumption]
+    Consider the ring $R_q = \Z_q/(x^m + 1)$ and an error distribution $\chi$. Then, the following two distributions are indistinguishable:
+
+    \begin{enumerate}
+        \item $A = (\q{a} \cdot \q{s} + \q{e}, \q{a})$, where $\q{a} \from R_q, s \from R_q, e \from \chi$.
+        \item $B = (\q{u}, \q{v})$, where $\q{u}, \q{v} \from R_q$ are completely random.
+    \end{enumerate}
+\end{ndefinition}
+
+The intuition behind this assumption is that the error terms $\q{e}$ are small enough that they can be masked by the secret key $\q{s}$, and the public key $\q{a}$ is random enough that the error terms are indistinguishable from random elements.
+
+Note that the RLWE problem may seem to be a completely new construct from what we have discussed in class, but it turns out that there exists a quantum algorithm that reduces RLWE to the SVP in lattices that we discussed in class \cite{fhe} \cite{ideal-lattices}.
+
+\subsection{BFV Operations}
+
+\subsubsection{Key Generation}
+
+The key generation algorithm for the BFV scheme is as follows \cite{fhe}:
+\begin{enumerate}
+    \item Generate a secret key $\q{s} \from \chi$, an error term $\q{e} \from \chi$, and a random public element $\q{a} \from R_q$.
+    \item Compute the public key as the tuple $pk = (-(\q{a} \cdot \q{s} + \q{e}), \q{a})$, which can be interpreted as a single element in $R_q \cross R_q$.
+\end{enumerate}
+
+This means that the public and private key spaces are $\mc{K_P} = R_q \cross R_q$ and $\mc{K_S} = R_q$, respectively.
+
+\subsubsection{Encryption}
+
+The encryption scheme is as follows \cite{fhe}:
+\begin{enumerate}
+    \item Given a public key $\q{pk} = (\q{pk}_0, \q{pk}_1)$ and a message $\q{m} \in R_t$, generate random error terms $\q{u}, \q{e}_1, \q{e}_2 \from \chi$.
+    \item Compute $\q{c}_0 = pk_0 \cdot \q{u} + \q{e}_1 + m \cdot \Delta$ and $\q{c}_1 = pk_1 \cdot \q{u} + \q{e}_2$.
+    \item Return the encrypted ciphertext $\q{c} = (\q{c}_0, \q{c}_1) \in R_q \cross R_q = \mathcal{C}$.
+\end{enumerate}
+
+\subsubsection{Decryption}
+
+The decryption process for a ciphertext $\q{c}$ and secret key $\q{s}$ is then as follows \cite{fhe}:
+
+\begin{enumerate}
+    \item Compute $\q{d}= \q{c}_0 + \q{c}_1 \cdot \q{s}$.
+    \item Round all of the values in $\q{d}$ to the nearest multiple of $\Delta$, and return the result as the decrypted message $\q{m}' \in R_t$.
+\end{enumerate}
+
+From this construction itself it is not immediately clear why this decryption process works, but we can see:
+
+\begin{ndefinition}[Theorem (BFV Decryption Correctness)]
+    The BFV decryption scheme is correct on ciphertexts encrypted with the BFV encryption scheme.
+\end{ndefinition}
+
+\begin{proof}
+    We see that before the final rounding process, the decrypted values are:
+    \begin{align}
+        \q{d} & = \q{c}_0 + \q{c}_1 \cdot \q{s}                                                                                                           \\
+              & = pk_0 \cdot \q{u} + \q{e}_1 + \q{m} \cdot \Delta + ( pk_1 \cdot \q{u} + \q{e}_2) \cdot \q{s}                                             \\
+              & = (-(\q{a} \cdot \q{s} + \q{e})) \cdot \q{u} + \q{e}_1 + \q{m} \cdot \Delta + ( \q{a} \cdot \q{u} + \q{e}_2) \cdot \q{s}                  \\
+              & = -\q{a} \cdot \q{s} \cdot \q{u} - \q{e} \cdot \q{u} + \q{e}_1 + \q{m} \cdot \Delta + \q{s} \cdot \q{a} \cdot \q{u} + \q{e}_2 \cdot \q{s} \\
+              & = \q{m} \cdot \Delta - \q{e} \cdot \q{u} + \q{e}_1 + \q{e}_2 \cdot \q{s}
+    \end{align}
+    So, in order for the rounded values of $\q{d}$ to be equal to $\q{m}$, we need to show that the error terms $\q{e} \cdot \q{u} + \q{e}_1 + \q{e}_2 \cdot \q{s}$ are small enough that the rounding process doesn't change the value of $\q{m}$.
+
+    Roughly speaking, since we know that $\chi$ is a Gaussian distribution with standard deviation $\sigma$, we can say that the sum of the error terms on the right have a collective distribution with standard deviation at most $\sqrt{3} \sigma$, since the sum of independent Gaussian variables has a standard deviation that is the square root of the sum of the squares of the individual standard deviations.
+
+    Therefore, so long as we choose $\sigma$ such that the probability that \textit{any of the polynomial coefficients of the error terms} exceed $\frac{\Delta}{2}$ is negligible, we can be confident that the rounding process will not change the value of $\q{m}$.
+
+    Therefore, as long as such a $\sigma$ is chosen, we conclude that the decryption protocol is correct.
+\end{proof}
+
+The security of the scheme relies on the opposite constraint on $\sigma$: it must be large enough that the error terms are indistinguishable from random noise, but small enough that the rounding process doesn't change the value of the message. One thing that helps with this is that we are free to choose $t,q$ to be as large as we want (generally), so we can vary $\Delta$ to make this tradeoff feasible.
+
+\subsubsection{Homomorphic Addition}
+
+The BFV protocol also allows us to perform homomorphic addition on ciphertexts. Given two ciphertexts $\q{c}_0 = (\q{c}_{0,0}, \q{c}_{0,1})$ and $\q{c}_1 = (\q{c}_{1,0}, \q{c}_{1,1})$, we can compute the sum of the ciphertexts as follows \cite{fhe}:
+\begin{align}
+    S_C(\q{c}_0, \q{c}_1) = (\q{c}_{0,0} + \q{c}_{1,0}, \q{c}_{0,1} + \q{c}_{1,1})
+\end{align}
+
+Such that the function we compute on the message space of the ciphertexts is basic addition in the ring $R_t$: $S_M(m_1, m_2) = m_1 + m_2$. Using a similar argument to the decryption correctness proof, we can see that decryption of added ciphertexts will decrypt to $\q{m} \cdot \Delta$ plus some error term, which
+\begin{align}
+    \q{d}' & = \q{c}_0 + \q{c}_1 \cdot \q{s}                                                                                                                                        \\
+           & = (\q{c}_{0,0} + \q{c}_{1,0}) + (\q{c}_{0,1} + \q{c}_{1,1}) \cdot \q{s}                                                                                                \\
+           & = \ldots                                                                                                                                                               \\
+           & = (\q{m}_1 + \q{m}_2) \cdot \Delta + (- \q{e}_0 \cdot \q{u}_0 + \q{e}_{01} + \q{e}_{02} \cdot \q{s}) + (- \q{e}_1 \cdot \q{u}_1 + \q{e}_{11} + \q{e}_{12} \cdot \q{s})
+\end{align}
+
+Note that for successive addition operations, the error term will \textit{increase linearly}, meaning that the error term will eventually exceed the critical value $\frac{\Delta}{2}$ and the decryption will fail (which is why this scheme is called \textit{somewhat} homomorphic).
 
 \section{Implementation}
 
+In the code associated with this report, I implemented my own BVF encryption class called \texttt{BFV}, which allows for encryption, decryption, and homomorphic addition of ciphertexts. Figure \ref{fig:encryption-time} shows a code sample of how to use this class to encrypt and decrypt messages, and the file when run exposes a simple CLI to encrypt and decrypt ASCII messages.
 
+Everything is implemented from scratch (including custom ring classes exposing convenient APIs for adding and multiplying elements in $R_n$ for any $n$), and the only external library you need is \texttt{matplotlib}, but only to generate the figures present in this report (not for the actual encryption and decryption).
 
-\section{Conclusion}
+\subsection{Performance}
+
+Since all of the operations are at most quadratic with regards to the message length $m$ (except for multiplication of elements in $R_q$, which in my implementation is $O(m^2)$), we expect that the encryption and decryption times will be at most quadratic with respect to the message length. Results of some experiments can be seen in Figure \ref{fig:encryption-time}, which do show the approximately quadratic runtime. I should also note that the entire process is really quite slow, but this is largely an artifact of using Python as opposed to a compiled language.
+
+\begin{figure}
+    \centering
+    \begin{tabular}{cc}
+        \includegraphics[width=0.4\textwidth]{../src/graphs/time_vs_m.png}
+         &
+        \includegraphics[width=0.30\textwidth]{../src/graphs/code_sample.png}
+    \end{tabular}
+
+    \caption{Left: Encryption time as a function of message length $m$. Right: Code sample of using my custom BFV class for encryption and decryption.}
+    \label{fig:encryption-time}
+\end{figure}
 
 % Add bibliography
 
