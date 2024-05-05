@@ -19,7 +19,7 @@ def test_basic_bfv():
     Q = 1382
     T = 10
     M = 3
-    bfv = BFV(1.0, Q, M, T)
+    bfv = BFV(5.0, Q, M, T)
     sk, pk = bfv.generate_keypair()
     
     m = bfv.R_T([1, 2, 3])
@@ -31,7 +31,7 @@ def test_medium_bfv():
     Q = 1382413143
     T = 1124
     M = 6
-    bfv = BFV(100.0, Q, M, T)
+    bfv = BFV(10.0, Q, M, T)
     sk, pk = bfv.generate_keypair()
     
     m = bfv.R_T([1, 2, 3, 4, 5, 6])
@@ -48,7 +48,7 @@ def test_random_addition():
     Q = 10**10
     T = 10**5
     M = 100
-    bfv = BFV(100.0, Q, M, T)
+    bfv = BFV(10.0, Q, M, T)
     
     sk, pk = bfv.generate_keypair()
     

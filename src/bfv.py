@@ -137,7 +137,7 @@ def make_ring(n: int, m: int) -> Type:
 
 def sample_gaussian_error(sigma: float, n: int, m: int) -> list[int]:
     """
-    Generates a sample from the Gaussian error distribution that is gaussian in each polynomial coordinate of R_Q.
+    Generates a sample from the Gaussian error distribution that is gaussian in each polynomial coordinate of R_n.
     """
     return [abs(int(random.gauss(0, sigma))) % n for _ in range(m)]
 
@@ -158,17 +158,14 @@ class BFV:
         self.q = q
         self.m = m
         self.t = t
-        self.p = q ** 8 + 2
         
         self.R_Q = make_ring(q, m)
         self.R_T = make_ring(t, m)
-        self.R_PQ = make_ring(self.p * self.q, m)
         
-        # self.chi = lambda: self.R_Q(sample_gaussian_error(sigma, q, m))
-        self.chi = lambda: self.R_Q([0] * m)
+        self.chi = lambda: self.R_Q(sample_gaussian_error(sigma, q, m))
         
     def generate_keypair(self) -> Tuple[SecretKey, PublicKey]:
-        s = sample_from_ring(self.R_Q, self.q, self.m)
+        s = self.chi()
         a = sample_from_ring(self.R_Q, self.q, self.m)
         e = self.chi()
         
@@ -183,7 +180,7 @@ class BFV:
         Encrypts a message.
         """
         pk0, pk1 = k_p
-        u = sample_from_ring(self.R_Q, self.q, self.m)
+        u = self.chi()
         e_1 = self.chi()
         e_2 = self.chi()
         m_in_q = self.R_Q(m.c)
@@ -211,4 +208,38 @@ class BFV:
         """
         return (c_1[0] + c_2[0], c_1[1] + c_2[1])
 
+def make_graphs():
+    print("Running experiments and making graphs...")
+    
+    import matplotlib.pyplot as plt
+    
+    
+    
+if __name__ == "__main__":
+    arg_parser = argparse.ArgumentParser("BFV Encryption Scheme")
+    arg_parser.add_argument("--sigma", type=float, default=4.0)
+    arg_parser.add_argument("-q", type=int, default=40102)
+    arg_parser.add_argument("-m", type=str, default="Test Message")
+    arg_parser.add_argument("-t", type=int, default=256)
+    arg_parser.add_argument("-g", default=False, action="store_true")
+    
+    args = arg_parser.parse_args()
+    
+    if args.g:
+        make_graphs()
+        exit()
+    
+    bfv = BFV(args.sigma, args.q, len(args.m), args.t)
+    
+    # Encode the message into R_T
+    m = bfv.R_T([ord(c) for c in args.m])
+    
+    sk, pk = bfv.generate_keypair()
+    c = bfv.encrypt(pk, m)
+    m_prime = bfv.decrypt(sk, c)
+    
+    print("Encoded Message:", m)
+    print("Encrypted Message:", c)
+    print("Decrypted Message:", m_prime)
+    print("Decoded Message:", "".join([chr(c) for c in m_prime.c]))
     

@@ -22,17 +22,20 @@
 
 \section{Introduction}
 
-Homomorphic encryption is an important cryptographic primitive that is necessary to support modern cryptographic protocols, such as anonymous voting. Some constructions of such a scheme are complicated and unintuitive. However, recent constructions relying on the Learning With Errors (LWE) problem and utilizing lattice structures provide concise and palatable examples.
+Homomorphic encryption is an important cryptographic primitive that is necessary to support modern cryptographic protocols, such as anonymous voting. Some constructions of such a scheme are complicated and unintuitive. However, recent constructions relying on the Ring Learning With Errors (RLWE) problem provide reasonably concise and palatable constructions by relying on algebraic ring structures and computation therein.
 
-This report will discuss the background and context for such a scheme, and walk through a sample implementation in Python.
+This report will discuss the background and context for such a scheme (called BFV), and walk through a sample implementation in Python.
+\footnote{Disclaimer: I was first exposed to this scheme and the RLWE problem in CSCI1515 (Applied Cryptography). However, the presentation was incredibly brief and didn't give any mathematical background on the construction, and we later used a library implementation as a black-box to construct other protocols. The content in the project is completely disjoint from that exposure, including both the mathematical background and the custom implementation.}
 
-\subsection{Notation}
+\section{Background}
 
 Let $\mc{K_S}, \mc{K_P}, \mc{M}, \mc{C}$ represent the secret key space, public key space, message space, and ciphertext spaces of an encryption scheme, respectively.
 
+We recall from class that a \textit{ring} is a mathematical structure
+
 \section{Homomorphic Encryption}
 
-When we say that an encryption scheme is \textit{homomorphic}, what we really mean is that we are able to perform some binary operation $S_C: (C,C) \to C$ on encrypted ciphertexts that corresponds to some operation $S_M: (M, M) \to M$ on the original messages.
+When we say that an encryption scheme is \textit{homomorphic}, what we really mean is that we are able to perform some binary operation $S_C: (C,C) \to C$ on encrypted ciphertexts that corresponds to some operation $S_M: (M, M) \to M$ on the original messages \cite{fhe}.
 
 An intuitive example could be a scheme where adding two ciphertexts $c_1 + c_2$ results in a ciphertext that is a valid encryption of the \textit{sum} of the original messages $m_1,m_2$, such that only the sum $m_1 + m_2$ is revealed when the quantity $c_1 + c_2$ is decrypted. Importantly, this cannot reveal \textit{anything about the original ciphertexts themselves} (other than what is discernable from the operation itself).
 
@@ -88,6 +91,8 @@ We also require a noise distribution $\chi$ which produces random element $e \in
 The RLWE problem is then defined as follows :
 
 \section{Implementation}
+
+
 
 \section{Conclusion}
 
